@@ -1,0 +1,369 @@
+#+TITLE: NetworkManager guide (nmcli) 
+#+AUTHOR: Anass Anhari
+
+#+BEGIN_abstract
+This document contains the essential information for using
+*/_NetworkManager_/*, a basic instruction guide set for operating with
+*/nmcli/*.
+
+For fully detailed information, please see */man nmcli/*.
+#+END_abstract
+
+
+* 1) connection
+** Show details of connection profiles
+   #+BEGIN_SRC shell 
+   nmcli con show [--active, --show-secrets] [id | uuid | path] <ID>
+   #+END_SRC
+
+   The flag '--active' will only show the profiles of the current
+   active profiles.
+
+   For displaying also the associated secrets use the '--show-secrets'
+   option.
+
+** Up, activate a connection on a device
+   
+   #+BEGIN_SRC shell 
+   nmcli con up ifname <ifname> [ap <BSSID>] [nsp <name>] [passwd-file <file with passwords>]
+   #+END_SRC
+   
+** Down, deactivate a connection from a device 
+   
+   #+BEGIN_SRC shell 
+   nmcli con down [id | uuid | path | apath] <ID>
+   #+END_SRC
+
+** Add a new connection profile
+   
+   This option is crucial since we manually define an entire
+   profile for an interface. 
+
+   The basic interfaces we'll be defining are
+
+   - Ethernet profiles
+   - Wi-Fi profiles
+   - Bridge (master device) profiles
+   - Bridge Slaves (slave devices) profiles
+   
+   By adding a new connection profile we can define many properties
+   (everything on the man page) as the IPv4 addresses and gateways,
+   automatic addresses (from the DHCP) for dynamic IPs or static IPs
+   with manual configuration, we can define the DNS configuration, and
+   so on.
+   
+   Basic properties:
+
+   1) **con-name**: The connection profile name
+   2) **ifname**: The interface name where the profile will be applied
+   3) **type**: The type of profile (ethernet, wifi, bridge,
+      bridge-slave, ...)
+   4) **ipv4.addresses (or ip4)**: The IPv4 address
+   5) **ipv4.gateway (or gw4)**: The IPv4 gateway adress
+   6) **ssid**: The SSID of a network (also if it is hidden)
+   7) **wifi-sec.key-mgmt**: The key management as wpa-psk
+      (preshared-key), wpa-eap, ...
+   8) **wifi-sec.psk**: The SSID preshared key (the "password" of the
+      wifi network)
+   
+   Examples:
+
+   - Define a ethernet profile
+     
+     #+BEGIN_SRC shell 
+     nmcli con add con-name ethProfile ifname eth0 type ethernet ip4 192.168.1.14/24 gw4 192.168.1.1
+     #+END_SRC
+   
+   - Define a wifi profile
+
+     #+BEGIN_SRC shell 
+     nmcli con add con-name wifiProfile ifname wl0 type wifi ip4 192.168.1.14/24 gw4 192.168.1.1 ssid "MiFibra-5C60" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "password"
+     #+END_SRC
+
+   - Define a bridge profile
+
+     #+BEGIN_SRC shell 
+     nmcli con add con-name myBridge type bridge ip4 192.168.1.14/24 gw4 192.168.1.1
+     #+END_SRC
+
+   - Define a bridge-slave profile
+
+     #+BEGIN_SRC shell 
+     nmcli con add con-name brSlave type bridge-slave ifname eth0 master myBridge
+     #+END_SRC
+
+   
+** Modify one or more properties of a connection profile
+   
+   #+BEGIN_SRC shell 
+   nmcli con modify [id | uuid | path] <ID> ([+|-]<setting>.<property> <value>)+
+   #+END_SRC
+
+** Clone an existing connection profile
+   
+   #+BEGIN_SRC shell 
+   nmcli con clone [--temporary] [id | uuid | path] <ID> <new name>
+   #+END_SRC
+   
+** Delete a connection profile
+   
+   #+BEGIN_SRC shell 
+   nmcli con delete [id | uuid | path] <ID>
+   #+END_SRC
+   
+** Reload all connection files from disk
+   
+   #+BEGIN_SRC shell 
+   nmcli con reload
+   #+END_SRC
+   
+** Load or reload one or more connection files from disk.
+   
+   #+BEGIN_SRC shell 
+   nmcli con load <filename>
+   #+END_SRC
+   
+
+* 2) device
+** Show details of device(s)
+
+   #+BEGIN_SRC shell 
+   nmcli dev show [<ifname>]
+   #+END_SRC
+
+   The command lists details for all devices, or for a given device.
+** Status for all devices
+
+   #+BEGIN_SRC shell 
+   nmcli dev status
+   #+END_SRC
+   
+   By default, the following columns are shown:
+
+   - DEVICE     - interface name
+   - TYPE       - device type
+   - STATE      - device state
+   - CONNECTION - connection activated on device (if any)
+   
+   |--------+----------+-----------+--------------------|
+   | DEVICE | TYPE     | STATE     | CONNECTION         |
+   |--------+----------+-----------+--------------------|
+   | ens33  | ethernet | connected | Wired connection 1 |
+   | lo     | loopback | unmanaged | --                 |
+   |--------+----------+-----------+--------------------|
+ 
+** Set device properties.
+   
+   #+BEGIN_SRC shell 
+   nmcli dev set [ifname] ifname [autoconnect {yes | no}]
+   nmcli dev set [ifname] ifname [managed {yes | no}]
+   #+END_SRC 
+     
+** Connect the device.
+
+   #+BEGIN_SRC shell 
+   nmcli dev connect [<ifname>]
+   #+END_SRC
+   
+   NetworkManager will try to find a suitable connection that will be
+   activated.
+   
+   It will also consider connections that are not set to
+   auto-connect. 
+
+** Disconnect the device
+   
+   #+BEGIN_SRC shell 
+   nmcli dev disconnect [<ifname>]
+   #+END_SRC
+   
+   The command disconnects the device and prevents it from
+   auto-activating further connections without user/manual
+   intervention. 
+   
+** Modify one or more properties on an active device
+   
+   Modify one or more properties currently active on the device without modifying
+   the connection profile. The changes have immediate effect. 
+
+   #+BEGIN_SRC shell 
+   nmcli dev modify <ifname> ([+|-]<setting>.<property> <value>)+
+   #+END_SRC
+   
+   #+BEGIN_QUOTE
+   **_NOTE:_** The changes do not modify the connection profile!
+   #+END_QUOTE
+
+** Delete the software devices
+   
+   #+BEGIN_SRC shell 
+   nmcli dev delete [<ifname>]
+   #+END_SRC
+
+   The command removes the interfaces. It only works for software
+   devices like:
+   - Bonds
+   - Brigdes
+   - etc.
+     
+   #+BEGIN_QUOTE
+   **_NOTE:_** Hardware devices cannot be deleted by the command!
+   #+END_QUOTE
+   
+** Perform operation on Wi-Fi devices
+   
+   - List available Wi-Fi access points
+     #+BEGIN_SRC shell 
+     nmcli dev wifi list [ifname <ifname>] [bssid <BSSID>] [--rescan yes|no|auto]
+     #+END_SRC
+     
+     The options 'ifname' and 'bssid' can be used for listing and
+     showing APs (access points) for a particular 'ifname'. 
+
+     The --rescan flag tells if a new scan should be done for listing
+     APs.
+
+   - Connect to a Wi-Fi network specified by SSID or BSSID
+     #+BEGIN_SRC shell 
+     sudo nmcli dev wifi connect connect <(B)SSID> [password <password>] [wep-key-type key|phrase] [ifname <ifname>]
+                     [bssid <BSSID>] [name <name>] [private yes|no] [hidden yes|no]
+     #+END_SRC
+     
+     The most common use would be:
+     #+BEGIN_SRC shell 
+     sudo nmcli dev wifi connect <"SSID"> password <"PASSWORD">
+     #+END_SRC
+     
+     And for security purposes, for not displaying the 'SSID' network
+     password we should run:
+     
+     #+BEGIN_SRC shell 
+     sudo nmcli --ask dev wifi connect <"SSID">
+     #+END_SRC
+
+   - Re-scan for available access points.
+     #+BEGIN_SRC shell 
+     nmcli dev wifi rescan [ifname <ifname>] [[ssid <SSID to scan>] ...]
+     #+END_SRC
+     
+     The option 'ssid' allows scanning for a specific SSID, which is
+     useful for APs with hidden SSIDs.
+     
+     #+BEGIN_QUOTE
+     **_NOTE:_** Performing a rescan would not show the APs!
+     #+END_QUOTE
+
+   
+   - Create a Wi-Fi hotspot
+     #+BEGIN_SRC shell 
+     nmcli dev wifi hotspot [ifname <ifname>] [con-name <name>] [ssid <SSID>]
+                     [band a|bg] [channel <channel>] [password <password>]
+     #+END_SRC
+        
+     Parameters:
+     + */_ifname:_/* Wi-Fi device to use
+     + */_con-name:_/* Hotspot connection profile name
+     + */_ssid:_/* SSID of the hotspot
+     + */_band:_/* Wi-Fi band to use
+     + */_channel:_/* Wi-Fi channel to use
+     + */_password:_/* Password for the hotspot
+
+     #+BEGIN_QUOTE
+     **_NOTE:_** Use 'connection down' or 'device disconnect' to stop
+       the hotspot.
+     #+END_QUOTE
+     
+
+   - Show a password of an interface
+     #+BEGIN_SRC shell 
+     nmcli dev wifi show-password <ifname>
+     #+END_SRC
+     
+
+* 3) general
+** Show overall status of NetworkManager.
+
+   We can check the status by doing:
+
+   #+BEGIN_SRC shell 
+   nmcli gen status
+   #+END_SRC
+   
+   Or also:
+   #+BEGIN_SRC shell 
+   nmcli gen
+   #+END_SRC
+   
+
+   
+
+# ** hostname [<hostname>]
+#    Get and change system hostname. With no arguments, this prints
+#    currently configured hostname. 
+   
+#    When you pass a hostname, it will be handed over to NetworkManager
+#    to be set as a new system hostname.
+   
+# ** permissions
+#    Show the permissions a caller has for various authenticated
+#    operations that NetworkManager provides, like enable and disable
+#    networking, changing Wi-Fi and WWAN state, modifying connections,
+#    etc.
+   
+# ** logging [level <log level>] [domains <log domains>]
+#    Get and change NetworkManager logging level and domains. Without
+#    any argument current logging level and domains are shown. 
+
+
+* 4) networking
+** Switch networking on.
+
+   #+BEGIN_SRC shell 
+   nmcli net on
+   #+END_SRC
+
+** Switch networking off.
+
+   #+BEGIN_SRC shell 
+   nmcli net off
+   #+END_SRC
+
+** Get network connectivity state.
+   
+   #+BEGIN_SRC shell 
+   nmcli net connectivity [check]
+   #+END_SRC
+   
+   The optional *check* argument makes NetworkManager re-check the
+   connectivity.
+   
+   Possible states are:
+   + */_none:_/* The host is not connected to any network.
+
+   + */_portal:_/* The host is behind a captive portal and cannot reach the full Internet.
+
+   + */_limited:_/* The host is connected to a network, but it has no access to the Internet.
+
+   + */_full:_/* The host is connected to a network and has full access to the Internet.
+
+   + */_unknown:_/* The connectivity status cannot be found out.
+     
+
+* 5) radio
+** Get status of *all* radio switches, or turn them on/off.
+
+    #+BEGIN_SRC shell 
+    nmcli radio all [on | off]
+    #+END_SRC
+
+** Get status of *Wi-Fi* radio switch, or turn it on/off.
+    
+    #+BEGIN_SRC shell 
+    nmcli radio wifi [on | off]
+    #+END_SRC
+
+** Get status of *mobile broadband* radio switch, or turn it on/off.
+
+    #+BEGIN_SRC shell 
+    nmcli radio wwan [on | off]
+    #+END_SRC
