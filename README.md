@@ -1,4 +1,4 @@
-# 🌐 NetworkManager Complete Guide
+# 🌐 NetworkManager NMCLI Complete Guide
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Linux](https://img.shields.io/badge/OS-Linux-blue.svg)](https://www.linux.org/)
