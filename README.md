@@ -519,7 +519,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **AHMAD SHARIQUE**
-- 📧 Email: eshariq.am@gmail.com
 - 🌐 GitHub: [@ahmadsharique](https://github.com/ahmadsharique)
 - 💼 LinkedIn: [Ahmad Sharique](https://linkedin.com/in/ahmadsharique)
 
